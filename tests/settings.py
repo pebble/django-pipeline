@@ -165,6 +165,8 @@ if HAS_NODE and HAS_JAVA:
 if HAS_CSSTIDY:
     PIPELINE.update({'CSSTIDY_BINARY': CSSTIDY_EXE_PATH})
 
+VERBOSE = False
+
 TEMPLATE_DIRS = (
     local_path('templates'),
 )

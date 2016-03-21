@@ -42,11 +42,11 @@ FONT_EXTS = ['.ttf', '.otf', '.woff']
 class Compressor(object):
     asset_contents = {}
 
-    def __init__(self, storage=None, verbose=False):
+    def __init__(self, storage=None, verbose=None):
         if storage is None:
             storage = staticfiles_storage
         self.storage = storage
-        self.verbose = verbose
+        self.verbose = settings.VERBOSE if verbose is None else verbose
 
     @property
     def js_compressor(self):
@@ -260,6 +260,8 @@ class SubProcessCompressor(CompressorBase):
                 argument_list.append(flattening_arg)
             else:
                 argument_list.extend(flattening_arg)
+        if self.verbose:
+            print(" ".join(argument_list))
         stdin = subprocess.PIPE if content else None
 
         pipe = subprocess.Popen(argument_list, stdout=subprocess.PIPE,

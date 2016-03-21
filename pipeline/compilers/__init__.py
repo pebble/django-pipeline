@@ -16,11 +16,11 @@ from pipeline.utils import to_class, set_std_streams_blocking
 
 
 class Compiler(object):
-    def __init__(self, storage=None, verbose=False):
+    def __init__(self, storage=None, verbose=None):
         if storage is None:
             storage = staticfiles_storage
         self.storage = storage
-        self.verbose = verbose
+        self.verbose = settings.VERBOSE if verbose is None else verbose
 
     @property
     def compilers(self):
@@ -112,6 +112,8 @@ class SubProcessCompiler(CompilerBase):
                 argument_list.extend(flattening_arg)
 
         stdout = None
+        if self.verbose:
+            print(" ".join(argument_list))
         try:
             # We always catch stdout in a file, but we may not have a use for it.
             temp_file_container = cwd or os.path.dirname(stdout_captured or "") or os.getcwd()
