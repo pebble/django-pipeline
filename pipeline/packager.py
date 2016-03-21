@@ -62,11 +62,11 @@ class Package(object):
 
 
 class Packager(object):
-    def __init__(self, storage=None, verbose=False, css_packages=None, js_packages=None):
+    def __init__(self, storage=None, verbose=None, css_packages=None, js_packages=None):
         if storage is None:
             storage = staticfiles_storage
         self.storage = storage
-        self.verbose = verbose
+        self.verbose = settings.VERBOSE if verbose is None else verbose
         self.compressor = Compressor(storage=storage, verbose=verbose)
         self.compiler = Compiler(storage=storage, verbose=verbose)
         if css_packages is None:
