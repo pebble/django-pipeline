@@ -102,6 +102,7 @@ class PipelineMixin(object):
         """
         logger.debug("Rendering package %s", package_name)
         start_t = datetime.now()
+        logger.debug("Request: {}".format(self.request))
         if settings.PIPELINE_COLLECTOR_ENABLED:
             default_collector.collect(self.request)
         collect_t = datetime.now()

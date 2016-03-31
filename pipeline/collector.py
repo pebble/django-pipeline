@@ -30,6 +30,7 @@ class Collector(object):
             self.clear(os.path.join(path, d))
 
     def collect(self, request=None, files=[]):
+
         if self.request and self.request is request:
             return
         self.request = request
@@ -51,18 +52,15 @@ class Collector(object):
 
                 if (prefixed_path not in found_files and
                     (not files or prefixed_path in files)):
-                    logger.debug("Collector COPIED  %s", path)
                     found_files[prefixed_path] = (storage, path)
                     copy_start = datetime.now()
                     self.copy_file(path, prefixed_path, storage)
                     total_copy_t += datetime.now() - copy_start
-                else:
-                    logger.debug("Collector IGNORED %s", path)
 
                 if files and len(files) == len(found_files):
                     break
         collect_end_t = datetime.now()
-        logger.debug("Spent %f of %fms copying", (collect_end_t-collect_start_t).total_seconds()*1000.0, total_copy_t.total_seconds()*1000.0)
+        logger.debug("Spent %f of %fms copying", total_copy_t.total_seconds()*1000.0, (collect_end_t-collect_start_t).total_seconds()*1000.0)
 
         return six.iterkeys(found_files)
 
@@ -91,8 +89,6 @@ class Collector(object):
                 else:
                     # Skip the file if the source file is younger
                     # Avoid sub-second precision
-                    logger.debug("{} changed at {}".format(prefixed_path, target_last_modified))
-                    logger.debug("{} changed at {}".format(path, source_last_modified))
                     if (target_last_modified.replace(microsecond=0)
                             >= source_last_modified.replace(microsecond=0)):
                             logger.debug("Not copying %s: younger than %s", path, prefixed_path)
