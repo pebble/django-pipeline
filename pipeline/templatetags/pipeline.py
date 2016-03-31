@@ -33,6 +33,8 @@ class PipelineMixin(object):
         return self._request_var
 
     def package_for(self, package_name, package_type):
+        logger.debug("Making %s package for %s", package_type, package_name)
+        start_t = datetime.now()
         package = {
             'js': getattr(settings, 'JAVASCRIPT', {}).get(package_name, {}),
             'css': getattr(settings, 'STYLESHEETS', {}).get(package_name, {}),
@@ -46,7 +48,10 @@ class PipelineMixin(object):
             'css': Packager(css_packages=package, js_packages={}),
         }[package_type]
 
-        return packager.package_for(package_type, package_name)
+        ret = packager.package_for(package_type, package_name)
+        end_t = datetime.now()
+        logger.debug("Making package_for took %fms", (end_t - start_t).total_seconds()*1000.0)
+        return ret
 
     def render(self, context):
         try:
@@ -101,6 +106,7 @@ class PipelineMixin(object):
             default_collector.collect(self.request)
         collect_t = datetime.now()
         packager = Packager()
+        init_packager_t = datetime.now()
         method = getattr(self, 'render_individual_{0}'.format(package_type))
 
         try:
@@ -119,8 +125,9 @@ class PipelineMixin(object):
         pack_t = datetime.now()
 
         logger.debug("Collect took %fms", (collect_t - start_t).total_seconds()*1000.0)
-        logger.debug("Compile took %fms", (compile_t - start_t).total_seconds()*1000.0)
-        logger.debug("Pack took %fms", (pack_t - start_t).total_seconds()*1000.0)
+        logger.debug("Init packager took %fms", (init_packager_t - collect_t).total_seconds()*1000.0)
+        logger.debug("Compile took %fms", (compile_t - init_packager_t).total_seconds()*1000.0)
+        logger.debug("Pack took %fms", (pack_t - compile_t).total_seconds()*1000.0)
 
         return method(package, paths, templates=templates)
 
