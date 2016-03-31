@@ -79,21 +79,26 @@ class Collector(object):
             try:
                 # When was the target file modified last time?
                 target_last_modified = self.storage.modified_time(prefixed_path)
-            except (OSError, NotImplementedError, AttributeError):
+            except (OSError, NotImplementedError, AttributeError) as e:
                 # The storage doesn't support ``modified_time`` or failed
-                pass
+                logger.debug("Didn't check target last-modified for %s. %s", prefixed_path, str(e))
             else:
                 try:
                     # When was the source file modified last time?
                     source_last_modified = source_storage.modified_time(path)
                 except (OSError, NotImplementedError, AttributeError):
-                    pass
+                    logger.debug("Didn't check source last-modified for %s. %s", path, str(e))
                 else:
                     # Skip the file if the source file is younger
                     # Avoid sub-second precision
+                    logger.debug("{} changed at {}".format(prefixed_path, target_last_modified))
+                    logger.debug("{} changed at {}".format(path, source_last_modified))
                     if (target_last_modified.replace(microsecond=0)
                             >= source_last_modified.replace(microsecond=0)):
+                            logger.debug("Not copying %s: younger than %s", path, prefixed_path)
                             return False
+                    else:
+                        logger.debug("Going to copy %s to %s", path, prefixed_path)
             # Then delete the existing file if really needed
             self.storage.delete(prefixed_path)
         return True
