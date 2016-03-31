@@ -95,6 +95,7 @@ class PipelineMixin(object):
         Subclasses can override this method to provide custom behavior for
         rendering the source files.
         """
+        logger.debug("Rendering package %s", package_name)
         start_t = datetime.now()
         if settings.PIPELINE_COLLECTOR_ENABLED:
             default_collector.collect(self.request)
@@ -117,9 +118,9 @@ class PipelineMixin(object):
         templates = packager.pack_templates(package)
         pack_t = datetime.now()
 
-        logger.info("Collect took %d", (collect_t - start_t).total_seconds())
-        logger.info("Compile took %d", (compile_t - start_t).total_seconds())
-        logger.info("Pack took %d", (pack_t - start_t).total_seconds())
+        logger.debug("Collect took %fms", (collect_t - start_t).total_seconds()*1000.0)
+        logger.debug("Compile took %fms", (compile_t - start_t).total_seconds()*1000.0)
+        logger.debug("Pack took %fms", (pack_t - start_t).total_seconds()*1000.0)
 
         return method(package, paths, templates=templates)
 
