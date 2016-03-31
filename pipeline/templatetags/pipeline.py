@@ -2,6 +2,7 @@ from __future__ import unicode_literals
 
 import logging
 import subprocess
+from datetime import datetime
 
 from django.contrib.staticfiles.storage import staticfiles_storage
 
@@ -94,14 +95,16 @@ class PipelineMixin(object):
         Subclasses can override this method to provide custom behavior for
         rendering the source files.
         """
+        start_t = datetime.now()
         if settings.PIPELINE_COLLECTOR_ENABLED:
             default_collector.collect(self.request)
-
+        collect_t = datetime.now()
         packager = Packager()
         method = getattr(self, 'render_individual_{0}'.format(package_type))
 
         try:
             paths = packager.compile(package.paths)
+            compile_t = datetime.now()
         except CompilerError as e:
             if settings.SHOW_ERRORS_INLINE:
                 method = getattr(self, 'render_error_{0}'.format(
@@ -112,6 +115,11 @@ class PipelineMixin(object):
                 raise
 
         templates = packager.pack_templates(package)
+        pack_t = datetime.now()
+
+        logger.info("Collect took %d", (collect_t - start_t).total_seconds())
+        logger.info("Compile took %d", (compile_t - start_t).total_seconds())
+        logger.info("Pack took %d", (pack_t - start_t).total_seconds())
 
         return method(package, paths, templates=templates)
 
