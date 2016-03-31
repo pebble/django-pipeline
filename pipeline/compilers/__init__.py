@@ -8,7 +8,7 @@ from django.contrib.staticfiles import finders
 from django.contrib.staticfiles.storage import staticfiles_storage
 from django.core.files.base import ContentFile
 from django.utils.encoding import smart_bytes
-from django.utils.six import string_types
+from django.utils.six import string_types, text_type
 
 from pipeline.conf import settings
 from pipeline.exceptions import CompilerError
@@ -79,11 +79,12 @@ class CompilerBase(object):
         return '.'.join((path[0], extension))
 
     def is_outdated(self, infile, outfile):
-        if not self.storage.exists(outfile):
+        if not os.path.exists(outfile):
             return True
+
         try:
-            return self.storage.modified_time(infile) > self.storage.modified_time(outfile)
-        except (OSError, NotImplementedError):
+            return os.path.getmtime(infile) > os.path.getmtime(outfile)
+        except OSError:
             return True
 
 
@@ -127,7 +128,9 @@ class SubProcessCompiler(CompilerBase):
             if compiling.returncode != 0:
                 stdout_captured = None  # Don't save erroneous result.
                 raise CompilerError(
-                    "{0!r} exit code {1}\n{2}".format(argument_list, compiling.returncode, stderr))
+                    "{0!r} exit code {1}\n{2}".format(argument_list, compiling.returncode, stderr),
+                    command=argument_list,
+                    error_output=stderr)
 
             # User wants to see everything that happened.
             if self.verbose:
@@ -136,7 +139,8 @@ class SubProcessCompiler(CompilerBase):
                 print(stderr)
         except OSError as e:
             stdout_captured = None  # Don't save erroneous result.
-            raise CompilerError(e)
+            raise CompilerError(e, command=argument_list,
+                                error_output=text_type(e))
         finally:
             # Decide what to do with captured stdout.
             if stdout:
