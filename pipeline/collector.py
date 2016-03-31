@@ -1,7 +1,8 @@
 from __future__ import unicode_literals
 
+import logging
 import os
-
+from datetime import datetime, timedelta
 from collections import OrderedDict
 
 from django.contrib.staticfiles import finders
@@ -10,6 +11,7 @@ from django.utils import six
 
 from pipeline.finders import PipelineFinder
 
+logger = logging.getLogger(__name__)
 
 class Collector(object):
     request = None
@@ -32,11 +34,15 @@ class Collector(object):
             return
         self.request = request
         found_files = OrderedDict()
+        collect_start_t = datetime.now()
+        total_copy_t = timedelta()
+
         for finder in finders.get_finders():
             # Ignore our finder to avoid looping
             if isinstance(finder, PipelineFinder):
                 continue
             for path, storage in finder.list(['CVS', '.*', '*~']):
+
                 # Prefix the relative path if the source storage contains it
                 if getattr(storage, 'prefix', None):
                     prefixed_path = os.path.join(storage.prefix, path)
@@ -45,11 +51,18 @@ class Collector(object):
 
                 if (prefixed_path not in found_files and
                     (not files or prefixed_path in files)):
+                    logger.debug("Collector COPIED  %s", path)
                     found_files[prefixed_path] = (storage, path)
+                    copy_start = datetime.now()
                     self.copy_file(path, prefixed_path, storage)
+                    total_copy_t += datetime.now() - copy_start
+                else:
+                    logger.debug("Collector IGNORED %s", path)
 
                 if files and len(files) == len(found_files):
                     break
+        collect_end_t = datetime.now()
+        logger.debug("Spent %f of %fms copying", (collect_end_t-collect_start_t).total_seconds()*1000.0, total_copy_t.total_seconds()*1000.0)
 
         return six.iterkeys(found_files)
 
