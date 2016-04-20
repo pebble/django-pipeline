@@ -69,6 +69,7 @@ DEFAULTS = {
 
     'BABEL_BINARY': '/usr/bin/env babel',
     'BABEL_ARGUMENTS': '',
+    'BABEL_EXTENSION': 'es6',
 
     'LIVE_SCRIPT_BINARY': '/usr/bin/env lsc',
     'LIVE_SCRIPT_ARGUMENTS': '',
